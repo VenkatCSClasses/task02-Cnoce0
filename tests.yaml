@@ -1,1 +1,159 @@
+tests:
 
+  - name: getBalanceTest
+    setup:
+      account: { email: "a@b.com", balance: 200 }
+    assert:
+      balance_equals: 200
+
+  - name: getBalanceInitialZeroTest
+    setup:
+      account: { email: "a@b.com", balance: 0 }
+    assert:
+      balance_equals: 0
+
+  - name: getBalanceAfterValidWithdrawTest
+    setup:
+      account: { email: "a@b.com", balance: 200 }
+    actions:
+      - withdraw: 50
+    assert:
+      balance_equals: 150
+
+  - name: getBalanceAfterFailedWithdrawTest
+    setup:
+      account: { email: "a@b.com", balance: 200 }
+    actions:
+      - withdraw: 300
+    expect_exception: InsufficientFundsException
+    assert:
+      balance_equals: 200
+
+  - name: getBalancePrecisionTest
+    setup:
+      account: { email: "a@b.com", balance: 100.125 }
+    actions:
+      - withdraw: 0.125
+    assert:
+      balance_equals: 100.0
+
+  - name: getBalanceAfterMultipleWithdrawsTest
+    setup:
+      account: { email: "a@b.com", balance: 500 }
+    actions:
+      - withdraw: 100
+      - withdraw: 50
+    assert:
+      balance_equals: 350
+
+  - name: withdrawTest
+    setup:
+      account: { email: "a@b.com", balance: 200 }
+    actions:
+      - withdraw: 100
+    assert:
+      balance_equals: 100
+    exception_tests:
+      - action: { withdraw: 300 }
+        expect: InsufficientFundsException
+      - action: { withdraw: -20 }
+        expect: IllegalArgumentException
+      - action: { withdraw: 10.999 }
+        expect: IllegalArgumentException
+
+  - name: withdrawZeroTest
+    setup:
+      account: { email: "a@b.com", balance: 200 }
+    actions:
+      - withdraw: 0
+    assert:
+      balance_equals: 200
+
+  - name: withdrawEqualToBalanceTest
+    setup:
+      account: { email: "a@b.com", balance: 200 }
+    actions:
+      - withdraw: 200
+    assert:
+      balance_equals: 0
+
+  - name: withdrawNegativeAmountTest
+    setup:
+      account: { email: "a@b.com", balance: 200 }
+    actions:
+      - withdraw: -50
+    assert:
+      balance_equals: 200
+
+  - name: withdrawFractionalAmountTest
+    setup:
+      account: { email: "a@b.com", balance: 200.50 }
+    actions:
+      - withdraw: 0.50
+    assert:
+      balance_equals: 200.00
+
+  - name: isEmailValidTest
+    static_calls:
+      - { input: "a@b.com", expected: true }
+      - { input: "", expected: false }
+      - { input: "gmail.com@", expected: false }
+      - { input: "@johndoe", expected: false }
+      - { input: "johndoegmail.com", expected: false }
+      - { input: "john@.com", expected: false }
+      - { input: "john@gmailcom", expected: false }
+
+  - name: constructorTest
+    setup:
+      account: { email: "a@b.com", balance: 200 }
+    assert:
+      email_equals: "a@b.com"
+      balance_equals: 200
+    exception_tests:
+      - action: { withdraw: -50 }
+        expect: IllegalArgumentException
+      - action: { withdraw: 10.999 }
+        expect: IllegalArgumentException
+      - action: { constructor: { email: "", balance: 100 } }
+        expect: IllegalArgumentException
+
+  - name: isAmountValidTest
+    static_valid:
+      - 100
+      - 0
+      - 99.99
+      - 10.1
+    static_invalid:
+      - { value: -50, expect: IllegalArgumentException }
+      - { value: 100.999, expect: IllegalArgumentException }
+      - { value: 10.010, expect: IllegalArgumentException }
+
+  - name: depositTest
+    setup:
+      account: { email: "a@b.com", balance: 200 }
+    actions:
+      - deposit: 100
+      - deposit: 0
+      - deposit: 50.75
+    assert:
+      balance_equals: 350.75
+    exception_tests:
+      - action: { deposit: -50 }
+        expect: IllegalArgumentException
+      - action: { deposit: 10.999 }
+        expect: IllegalArgumentException
+
+  - name: transferTest
+    setup:
+      account1: { email: "a@b.com", balance: 200 }
+      account2: { email: "c@d.com", balance: 100 }
+    actions:
+      - transfer: { to: account2, amount: 50 }
+    assert:
+      account1_balance: 150
+      account2_balance: 150
+    exception_tests:
+      - action: { transfer: { to: account2, amount: -50 } }
+        expect: IllegalArgumentException
+      - action: { transfer: { to: account2, amount: 300 } }
+        expect: InsufficientFundsException
