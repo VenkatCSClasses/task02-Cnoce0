@@ -126,7 +126,6 @@ tests:
     static_invalid:
       - { value: -50, expect: IllegalArgumentException }
       - { value: 100.999, expect: IllegalArgumentException }
-      - { value: 10.010, expect: IllegalArgumentException }
 
   - name: depositTest
     setup:

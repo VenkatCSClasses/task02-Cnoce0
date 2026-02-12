@@ -78,3 +78,8 @@ Conditions:
 6. Must contain Top level domain name after @ symbol
 
 ### Testing
+
+Make a test file that passes all tests.yaml tests. 
+Make sure to change none of the tests
+add any edge cases that aren't covered 
+
